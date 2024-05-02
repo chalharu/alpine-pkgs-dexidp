@@ -1,0 +1,69 @@
+name: Deploy to Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# concurrency:
+#   group: "pages"
+#   cancel-in-progress: false
+
+jobs:
+  build:
+    environment: Alpine packages
+    runs-on: alpine:3.19
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Add packages
+        run: apk add alpine-sdk
+      - name: modify abuild.conf
+        run: |
+          if [ `grep -E "^PACKAGER=" /etc/abuild.conf | wc -l` == "0" ]; then
+            echo 'PACKAGER="${{ vars.PACKAGER }}"' >> /etc/abuild.conf
+          fi
+          if [ `grep -E "^MAINTAINER=" /etc/abuild.conf | wc -l` == "0" ]; then
+            echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> /etc/abuild.conf
+          fi
+          cat <<EOT > /privkey
+          ${{ secrets.PACKAGER_PRIVKEY }}
+          EOT`
+          if [ `grep -E "^PACKAGER_PRIVKEY=" /etc/abuild.conf | wc -l` == "0" ]; then
+            echo 'PACKAGER_PRIVKEY=/privkey' >> /etc/abuild.conf
+          fi
+          DESTDIR=${{ github.workspace }}/packages
+          if [ `grep -E "^REPODEST=" /etc/abuild.conf | wc -l` == "0" ]; then
+            echo "REPODEST=$DESTDIR" >> /etc/abuild.conf
+          fi
+          mkdir -p $DESTDIR
+      - name: Add user
+        run: |
+          adduser abuild -G abuild -D
+          chown -R abuild: ${{ github.workspace }}
+      - name: Build package
+        run: su abuild -c "abuild -r"
+
+#  deploy:
+#    environment:
+#      name: github-pages
+#      url: ${{ steps.deployment.outputs.page_url }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v5
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          # Upload entire repository
+#          path: '.'
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
