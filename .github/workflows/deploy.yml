@@ -30,11 +30,13 @@ jobs:
         run: apk add alpine-sdk
       - name: modify abuild.conf
         shell: alpine.sh --root {0}
+        env:
+          PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
         run: |
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
           if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
-          echo ${{ secrets.PACKAGER_PRIVKEY }} > /privkey
+          echo $PACKAGER_PRIVKEY | base64 --decode > /privkey
           if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/privkey' >> $ABUILD_CONF; fi
           DESTDIR=${{ github.workspace }}/packages
           if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
