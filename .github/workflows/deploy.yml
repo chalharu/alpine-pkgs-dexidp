@@ -31,22 +31,15 @@ jobs:
       - name: modify abuild.conf
         shell: alpine.sh --root {0}
         run: |
-          if [ `grep -E "^PACKAGER=" /etc/abuild.conf | wc -l` == "0" ]; then
-            echo 'PACKAGER="${{ vars.PACKAGER }}"' >> /etc/abuild.conf
-          fi
-          if [ `grep -E "^MAINTAINER=" /etc/abuild.conf | wc -l` == "0" ]; then
-            echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> /etc/abuild.conf
-          fi
+          ABUILD_CONF="/etc/abuild.conf"
+          if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
+          if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
           cat <<EOT > /privkey
           ${{ secrets.PACKAGER_PRIVKEY }}
           EOT`
-          if [ `grep -E "^PACKAGER_PRIVKEY=" /etc/abuild.conf | wc -l` == "0" ]; then
-            echo 'PACKAGER_PRIVKEY=/privkey' >> /etc/abuild.conf
-          fi
+          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/privkey' >> $ABUILD_CONF; fi
           DESTDIR=${{ github.workspace }}/packages
-          if [ `grep -E "^REPODEST=" /etc/abuild.conf | wc -l` == "0" ]; then
-            echo "REPODEST=$DESTDIR" >> /etc/abuild.conf
-          fi
+          if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
           mkdir -p $DESTDIR
       - name: Add user
         shell: alpine.sh --root {0}
