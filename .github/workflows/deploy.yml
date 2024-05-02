@@ -21,9 +21,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup latest Alpine Linux
+        uses: jirutka/setup-alpine@v1
+        with:
+          branch: v3.19
       - name: Add packages
+        shell: alpine.sh --root {0}
         run: apk add alpine-sdk
       - name: modify abuild.conf
+        shell: alpine.sh --root {0}
         run: |
           if [ `grep -E "^PACKAGER=" /etc/abuild.conf | wc -l` == "0" ]; then
             echo 'PACKAGER="${{ vars.PACKAGER }}"' >> /etc/abuild.conf
@@ -43,10 +49,12 @@ jobs:
           fi
           mkdir -p $DESTDIR
       - name: Add user
+        shell: alpine.sh --root {0}
         run: |
           adduser abuild -G abuild -D
           chown -R abuild: ${{ github.workspace }}
       - name: Build package
+        shell: alpine.sh --root {0}
         run: su abuild -c "abuild -r"
 
 #  deploy:
