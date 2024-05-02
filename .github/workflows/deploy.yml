@@ -23,7 +23,7 @@ jobs:
         with:
           path: ./packages
           key: packages-${{ steps.build-id.outputs.id }}
-          restore-keys: counter-
+          restore-keys: packages-
       - name: Checkout
         uses: actions/checkout@v4
         with:
