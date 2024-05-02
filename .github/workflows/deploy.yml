@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/cache/restore@v3
+        with:
+          key: packages
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -54,6 +56,7 @@ jobs:
         with:
           path: |
             ./packages
+          key: packages
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
