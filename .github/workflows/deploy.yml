@@ -19,7 +19,7 @@ jobs:
     environment: Alpine packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/cache/cache@v3
+      - uses: actions/cache@v3
         with:
           path: ./packages
           key: packages-${{ steps.build-id.outputs.id }}
