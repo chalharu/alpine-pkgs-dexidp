@@ -19,6 +19,7 @@ jobs:
     environment: Alpine packages
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/cache/restore@v3
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -49,6 +50,10 @@ jobs:
       - name: Build package
         shell: alpine.sh --root {0}
         run: cd src && abuild -r -F
+      - uses: actions/cache/save@v3
+        with:
+          path: |
+            ./packages
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
