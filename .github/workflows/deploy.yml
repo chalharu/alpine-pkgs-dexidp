@@ -17,7 +17,7 @@ permissions:
 jobs:
   build:
     environment: Alpine packages
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
