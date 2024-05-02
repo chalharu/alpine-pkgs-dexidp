@@ -22,6 +22,7 @@ jobs:
       - uses: actions/cache/restore@v3
         with:
           key: packages
+          path: ./packages
       - name: Checkout
         uses: actions/checkout@v4
         with:
