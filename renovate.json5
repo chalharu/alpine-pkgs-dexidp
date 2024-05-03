@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimitNone"
+  ],
+  "enabledManagers": ["github-actions", "custom.regex"],
+  "rebaseWhen": "behind-base-branch",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^(.+\\/)?APKBUILD$"],
+      "matchStrings": [
+        "^pkgver=(?<currentValue>.*)",
+        "^source=\"$pkgname-$pkgver\\.tar\\.gz::https://github.com/(?<depName>.+/.+)/archive/refs/tags/v$pkgver.tar.gz\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "renovatebot/github-action",
+        "tibdex/github-app-token",
+        "actions/checkout"
+      ],
+      "automerge": true
+    }
+  ]
+}
