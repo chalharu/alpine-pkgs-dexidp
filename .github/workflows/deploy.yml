@@ -29,6 +29,9 @@ jobs:
     environment: Alpine packages
     runs-on: ubuntu-latest
     steps:
+      - name: IDの生成
+        id: build-id
+        run: echo "::set-output name=id::$(date +%s)"
       - uses: actions/cache@v3
         with:
           path: ./packages
