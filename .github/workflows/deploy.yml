@@ -65,13 +65,6 @@ jobs:
           cd /ws/src
           abuild -r -F
           EOF
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          retention-days: 1
-          path: |
-            packages
   deploy:
     environment:
       name: github-pages
@@ -79,12 +72,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/cache/restore@v3
+        with:
+          path: ./packages
+          key: packages-
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Download a single artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
       - run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
