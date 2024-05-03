@@ -34,7 +34,7 @@ package() {
 examples() {
 	cd "$builddir"
 	install -Dm755 -t "$subpkgdir"/usr/bin/ \
-		bin/grpc-client \
+		bin/example-app \
 		bin/grpc-client
 }
 
