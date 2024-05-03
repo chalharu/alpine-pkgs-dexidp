@@ -11,10 +11,8 @@
     {
       "customType": "regex",
       "fileMatch": ["^(.+\\/)?APKBUILD$"],
-      "matchStrings": [
-        "^pkgver=(?<currentValue>.*)",
-        "^source=\"$pkgname-$pkgver\\.tar\\.gz::https://github.com/(?<depName>.+/.+)/archive/refs/tags/v$pkgver.tar.gz\""
-      ],
+      "matchStrings": [ "pkgver=(?<currentValue>.*)\\n" ],
+      "depNameTemplate": "dexidp/dex",
       "datasourceTemplate": "github-tags",
       "extractVersionTemplate": "^v(?<version>.*)$"
     }
