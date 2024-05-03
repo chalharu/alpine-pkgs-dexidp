@@ -28,19 +28,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: src
-      - name: Setup latest Alpine Linux
-        uses: jirutka/setup-alpine@v1
-        with:
-          branch: v3.19
-      - name: Add packages
-        shell: alpine.sh --root {0}
-        run: apk add alpine-sdk
-      - name: modify abuild.conf
-        shell: alpine.sh --root {0}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Build package
         env:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
           PACKAGER_PUBKEY: ${{ vars.PACKAGER_PUBKEY }}
         run: |
+          docker run --rm -i -v $PWD:/ws alpine:3.19 sh <<'EOF'
+          apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
           if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
@@ -48,12 +44,12 @@ jobs:
           echo $PACKAGER_PUBKEY | base64 -d > /privkey.pub
           cp /privkey.pub /etc/apk/keys/
           if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/privkey' >> $ABUILD_CONF; fi
-          DESTDIR=${{ github.workspace }}/packages
+          DESTDIR=/ws/packages
           if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
           mkdir -p $DESTDIR
-      - name: Build package
-        shell: alpine.sh --root {0}
-        run: cd src && abuild -r -F
+          cd /ws/src
+          abuild -r -F
+          EOF
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
