@@ -34,7 +34,7 @@ jobs:
         run: echo "::set-output name=id::$(date +%s)"
       - name: REPOSITORY_NAMEの取得
         run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ./packages
           key: packages-${{ steps.build-id.outputs.id }}
