@@ -32,6 +32,8 @@ jobs:
       - name: IDの生成
         id: build-id
         run: echo "::set-output name=id::$(date +%s)"
+      - name: REPOSITORY_NAMEの取得
+        run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: ./packages
@@ -55,17 +57,17 @@ jobs:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
           PACKAGER_PUBKEY: ${{ vars.PACKAGER_PUBKEY }}
         run: |
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD:/ws alpine:3.19 sh <<'EOF'
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD:/${{ env.REPOSITORY_NAME }} alpine:3.19 sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
           if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
-          cp /ws/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
-          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/ws/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
-          DESTDIR=/ws/packages
+          cp /${{ env.REPOSITORY_NAME }}/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
+          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/${{ env.REPOSITORY_NAME }}/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
+          DESTDIR=/${{ env.REPOSITORY_NAME }}/packages
           if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
           mkdir -p $DESTDIR
-          cd /ws/src
+          cd /${{ env.REPOSITORY_NAME }}/src
           abuild -r -F
           EOF
       - name: Archive artifacts
@@ -74,7 +76,7 @@ jobs:
           name: dist
           retention-days: 1
           path: |
-            packages/ws
+            packages/${{ env.REPOSITORY_NAME }}
           overwrite: true
   deploy:
     environment:
