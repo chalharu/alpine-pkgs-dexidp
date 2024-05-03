@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: IDの生成
         id: build-id
-        run: echo "::set-output name=id::$(date +%s)"
+        run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
       - name: REPOSITORY_NAMEの取得
         run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
       - uses: actions/cache@v4
