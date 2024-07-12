@@ -18,14 +18,13 @@ concurrency:
 
 jobs:
   build:
-    concurrency:
-      group: build
-      cancel-in-progress: false
     strategy:
       matrix:
-        arch:
-          - amd64
-          - arm64/v8
+        include:
+          - arch: amd64
+            apk-arch: x86_64
+          - arch: arm64/v8
+            apk-arch: aarch64
     environment: Alpine packages
     runs-on: ubuntu-latest
     steps:
@@ -37,8 +36,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ./packages
-          key: packages-${{ steps.build-id.outputs.id }}
-          restore-keys: packages-
+          key: packages-${{ matrix.apk-arch }}-${{ steps.build-id.outputs.id }}
+          restore-keys: |
+            packages-${{ matrix.apk-arch }}-
+            packages-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -57,7 +58,7 @@ jobs:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
           PACKAGER_PUBKEY: ${{ vars.PACKAGER_PUBKEY }}
         run: |
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD:/${{ env.REPOSITORY_NAME }} alpine:3.19 sh <<'EOF'
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD:/${{ env.REPOSITORY_NAME }} alpine:3.20 sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
@@ -70,10 +71,13 @@ jobs:
           cd /${{ env.REPOSITORY_NAME }}/src
           abuild -r -F
           EOF
+      - name: Remove other packages
+        run: |
+          find packages/${{ env.REPOSITORY_NAME }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ matrix.apk-arch }}
           retention-days: 1
           path: |
             packages/${{ env.REPOSITORY_NAME }}
@@ -88,7 +92,8 @@ jobs:
       - name: Download a single artifact
         uses: actions/download-artifact@v4
         with:
-          name: dist
+          pattern: dist-*
+          merge-multiple: true
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
