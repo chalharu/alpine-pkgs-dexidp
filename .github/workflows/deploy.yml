@@ -33,7 +33,7 @@ jobs:
         run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
       - name: REPOSITORY_NAMEの取得
         run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
-      - uses: actions/cache@v4
+      - uses: actions/cache@v4.0.2
         with:
           path: ./packages
           key: packages-${{ matrix.apk-arch }}-${{ steps.build-id.outputs.id }}
@@ -41,11 +41,11 @@ jobs:
             packages-${{ matrix.apk-arch }}-
             packages-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.7
         with:
           path: src
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v3.1.0
       - name: Key
         env:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
@@ -75,7 +75,7 @@ jobs:
         run: |
           find packages/${{ env.REPOSITORY_NAME }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.4
         with:
           name: dist-${{ matrix.apk-arch }}
           retention-days: 1
@@ -90,18 +90,18 @@ jobs:
     needs: build
     steps:
       - name: Download a single artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.8
         with:
           pattern: dist-*
           merge-multiple: true
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v5.0.0
       - run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
           # Upload entire repository
           path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5
