@@ -11,10 +11,12 @@
     {
       "customType": "regex",
       "fileMatch": ["^(.+\\/)?APKBUILD$"],
-      "matchStrings": [ "pkgver=(?<currentValue>.*)\\n" ],
-      "depNameTemplate": "dexidp/dex",
-      "datasourceTemplate": "github-tags",
-      "extractVersionTemplate": "^v(?<version>.*)$"
+      "matchStrings": [ "#[\\t ]*renovate:[\\t ]*datasource=(?<datasource>[a-z-]+?)(?:[\\t ]+depName=(?<depName>.+?))?(?:[\\t ]+versioning=(?<versioning>[a-z-]+?))?\\npkgver=(?<currentValue>.*)\\n" ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^(.+\\/)?[^/]+.yml$"],
+      "matchStrings": [ "#[\\t ]*renovate:[\\t ]*datasource=(?<datasource>[a-z-]+?)(?:[\\t ]+depName=(?<depName>.+?))?(?:[\\t ]+versioning=(?<versioning>[a-z-]+?))?\\n[\\t ]*DOCKER_[A-Z_]+_VERSION: \"(?<currentValue>.*)\"\\n" ]
     }
   ],
   "packageRules": [
@@ -22,9 +24,22 @@
       "matchPackageNames": [
         "renovatebot/github-action",
         "tibdex/github-app-token",
-        "actions/checkout"
+        "actions/checkout",
+        "actions/deploy-pages",
+        "actions/upload-pages-artifact",
+        "actions/configure-pages",
+        "actions/download-artifact",
+        "actions/upload-artifact",
+        "docker/setup-qemu-action",
+        "actions/cache"
       ],
       "automerge": true
+    },
+    {
+      "matchPackageNames": [
+        "dexidp/dex"
+      ],
+      "extractVersion": "^v(?<version>.*)$"
     }
   ]
 }

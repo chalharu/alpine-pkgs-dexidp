@@ -1,6 +1,7 @@
 # Contributor: Mitsuharu Seki <mitsu1986@gmail.com>
 # Maintainer: Mitsuharu Seki <mitsu1986@gmail.com>
 pkgname=dexidp
+# renovate: datasource=github-tags depName=dexidp/dex
 pkgver=2.40.0
 pkgrel=0
 pkgdesc="OpenID Connect (OIDC) identity and OAuth 2.0 provider with pluggable connectors"
