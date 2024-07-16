@@ -51,8 +51,9 @@ jobs:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
           PACKAGER_PUBKEY: ${{ vars.PACKAGER_PUBKEY }}
         run: |
-          echo $PACKAGER_PRIVKEY | base64 -d > ./${{ vars.PACKAGER_KEYFILENAME }}
-          echo $PACKAGER_PUBKEY | base64 -d > ./${{ vars.PACKAGER_KEYFILENAME }}.pub
+          mkdir ./keys
+          echo $PACKAGER_PRIVKEY | base64 -d > ./keys/${{ vars.PACKAGER_KEYFILENAME }}
+          echo $PACKAGER_PUBKEY | base64 -d > ./keys/${{ vars.PACKAGER_KEYFILENAME }}.pub
       - name: Build package
         env:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
@@ -60,13 +61,13 @@ jobs:
           # renovate: datasource=docker depName=alpine
           DOCKER_ALPINE_VERSION: "3.20"
         run: |
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD/src:/${{ env.REPOSITORY_NAME }}/src -v $PWD/packages:/${{ env.REPOSITORY_NAME }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD/src:/${{ env.REPOSITORY_NAME }}/src -v $PWD/keys:/${{ env.REPOSITORY_NAME }}/keys -v $PWD/packages:/${{ env.REPOSITORY_NAME }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
           if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
-          cp /${{ env.REPOSITORY_NAME }}/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
-          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/${{ env.REPOSITORY_NAME }}/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
+          cp /${{ env.REPOSITORY_NAME }}/keys/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
+          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/${{ env.REPOSITORY_NAME }}/keys/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
           DESTDIR=/${{ env.REPOSITORY_NAME }}/packages
           if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
           mkdir -p $DESTDIR
