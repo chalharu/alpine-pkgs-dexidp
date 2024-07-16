@@ -61,7 +61,8 @@ jobs:
           # renovate: datasource=docker depName=alpine
           DOCKER_ALPINE_VERSION: "3.20"
         run: |
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $PWD/src:/${{ env.REPOSITORY_NAME }}/src -v $PWD/keys:/${{ env.REPOSITORY_NAME }}/keys -v $PWD/packages:/${{ env.REPOSITORY_NAME }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
+          for p in $(find '/${{ env.REPOSITORY_NAME }}/src' -name APKBUILD -type f); do
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $(dirname $p):/${{ env.REPOSITORY_NAME }}/src -v $PWD/keys:/${{ env.REPOSITORY_NAME }}/keys -v $PWD/packages:/${{ env.REPOSITORY_NAME }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
@@ -74,6 +75,7 @@ jobs:
           cd /${{ env.REPOSITORY_NAME }}/src
           abuild -r -F
           EOF
+          done
       - name: Remove other packages
         run: |
           find packages/${{ env.REPOSITORY_NAME }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
