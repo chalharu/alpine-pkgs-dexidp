@@ -20,14 +20,10 @@ jobs:
   initialize:
     runs-on: ubuntu-latest
     steps:
-      - name: IDの生成
-        id: build-id
-        run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
       - name: REPOSITORY_NAMEの取得
         id: repository-name
         run: echo "repository-name=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_OUTPUT
     outputs:
-      id: ${{ steps.build-id.outputs.id }}
       repository-name: ${{ steps.repository-name.outputs.repository-name }}
   get-apkbuild-matrix:
     runs-on: ubuntu-latest
@@ -62,6 +58,9 @@ jobs:
       - initialize
       - get-apkbuild-matrix
     steps:
+      - name: IDの生成
+        id: build-id
+        run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
       - name: Checkout
         uses: actions/checkout@v4.1.7
         with:
@@ -79,7 +78,7 @@ jobs:
       - uses: actions/cache@v4.0.2
         with:
           path: ./packages
-          key: packages-${{ matrix.apk-arch }}-${{ needs.initialize.outputs.id }}
+          key: packages-${{ matrix.apk-arch }}-${{ steps.build-id.outputs.id }}
           restore-keys: |
             packages-${{ matrix.apk-arch }}-
             packages-
@@ -118,10 +117,10 @@ jobs:
       - build
       - initialize
     steps:
-      - uses: actions/cache@v4.0.2
+      - uses: actions/cache/restore@v4.0.2
         with:
           path: ./packages
-          key: packages-${{ matrix.apk-arch }}-${{ needs.initialize.outputs.id }}
+          key: packages-${{ matrix.apk-arch }}-99999999999999
           restore-keys: |
             packages-${{ matrix.apk-arch }}-
             packages-
