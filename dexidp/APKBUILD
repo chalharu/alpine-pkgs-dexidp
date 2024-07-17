@@ -15,6 +15,7 @@ install=""
 subpackages="$pkgname-examples:examples"
 source="$pkgname-$pkgver.tar.gz::https://github.com/dexidp/dex/archive/refs/tags/v$pkgver.tar.gz"
 builddir="$srcdir/dex-$pkgver"
+options="net"
 
 build() {
 	make build
