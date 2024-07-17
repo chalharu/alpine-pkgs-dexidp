@@ -17,6 +17,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: IDの生成
+        id: build-id
+        run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
+      - name: REPOSITORY_NAMEの取得
+        id: repository-name
+        run: echo "repository-name=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_OUTPUT
+    outputs:
+      id: ${{ steps.build-id.outputs.id }}
+      repository-name: ${{ steps.repository-name.outputs.repository-name }}
   build:
     strategy:
       matrix:
@@ -28,18 +40,6 @@ jobs:
     environment: Alpine packages
     runs-on: ubuntu-latest
     steps:
-      - name: IDの生成
-        id: build-id
-        run: echo "id=$(date +%s)" >> $GITHUB_OUTPUT
-      - name: REPOSITORY_NAMEの取得
-        run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
-      - uses: actions/cache@v4.0.2
-        with:
-          path: ./packages
-          key: packages-${{ matrix.apk-arch }}-${{ steps.build-id.outputs.id }}
-          restore-keys: |
-            packages-${{ matrix.apk-arch }}-
-            packages-
       - name: Checkout
         uses: actions/checkout@v4.1.7
         with:
@@ -54,6 +54,13 @@ jobs:
           mkdir ./keys
           echo $PACKAGER_PRIVKEY | base64 -d > ./keys/${{ vars.PACKAGER_KEYFILENAME }}
           echo $PACKAGER_PUBKEY | base64 -d > ./keys/${{ vars.PACKAGER_KEYFILENAME }}.pub
+      - uses: actions/cache@v4.0.2
+        with:
+          path: ./packages
+          key: packages-${{ matrix.apk-arch }}-${{ needs.initialize.outputs.id }}
+          restore-keys: |
+            packages-${{ matrix.apk-arch }}-
+            packages-
       - name: Build package
         env:
           PACKAGER_PRIVKEY: ${{ secrets.PACKAGER_PRIVKEY }}
@@ -62,30 +69,30 @@ jobs:
           DOCKER_ALPINE_VERSION: "3.20"
         run: |
           for p in $(find $PWD/src -name APKBUILD -type f); do
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $(dirname $p):/${{ env.REPOSITORY_NAME }}/src -v $PWD/keys:/${{ env.REPOSITORY_NAME }}/keys -v $PWD/packages:/${{ env.REPOSITORY_NAME }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $(dirname $p):/${{ needs.initialize.outputs.repository-name }}/src -v $PWD/keys:/${{ needs.initialize.outputs.repository-name }}/keys -v $PWD/packages:/${{ needs.initialize.outputs.repository-name }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
           if [ `grep -E "^MAINTAINER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'MAINTAINER="${{ vars.MAINTAINER }}"' >> $ABUILD_CONF; fi
-          cp /${{ env.REPOSITORY_NAME }}/keys/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
-          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/${{ env.REPOSITORY_NAME }}/keys/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
-          DESTDIR=/${{ env.REPOSITORY_NAME }}/packages
+          cp /${{ needs.initialize.outputs.repository-name }}/keys/${{ vars.PACKAGER_KEYFILENAME }}.pub /etc/apk/keys/
+          if [ `grep -E "^PACKAGER_PRIVKEY=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER_PRIVKEY=/${{ needs.initialize.outputs.repository-name }}/keys/${{ vars.PACKAGER_KEYFILENAME }}' >> $ABUILD_CONF; fi
+          DESTDIR=/${{ needs.initialize.outputs.repository-name }}/packages
           if [ `grep -E "^REPODEST=" $ABUILD_CONF | wc -l` == "0" ]; then echo "REPODEST=$DESTDIR" >> $ABUILD_CONF; fi
           mkdir -p $DESTDIR
-          cd /${{ env.REPOSITORY_NAME }}/src
+          cd /${{ needs.initialize.outputs.repository-name }}/src
           abuild -r -F
           EOF
           done
       - name: Remove other packages
         run: |
-          find packages/${{ env.REPOSITORY_NAME }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
+          find packages/${{ needs.initialize.outputs.repository-name }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
       - name: Archive artifacts
         uses: actions/upload-artifact@v4.3.4
         with:
           name: dist-${{ matrix.apk-arch }}
           retention-days: 1
           path: |
-            packages/${{ env.REPOSITORY_NAME }}
+            packages/${{ needs.initialize.outputs.repository-name }}
           overwrite: true
   deploy:
     environment:
@@ -101,7 +108,6 @@ jobs:
           merge-multiple: true
       - name: Setup Pages
         uses: actions/configure-pages@v5.0.0
-      - run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> $GITHUB_ENV
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3.0.1
         with:
