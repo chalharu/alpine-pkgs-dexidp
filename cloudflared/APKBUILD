@@ -1,0 +1,43 @@
+# Contributor: Mitsuharu Seki <mitsu1986@gmail.com>
+# Maintainer: Mitsuharu Seki <mitsu1986@gmail.com>
+pkgname=cloudflared
+# renovate: datasource=github-tags depName=dexidp/dex
+pkgver=2024.6.1
+pkgrel=0
+pkgdesc="Cloudflare Tunnel client (formerly Argo Tunnel) "
+url="https://github.com/cloudflare/cloudflared"
+arch="x86 x86_64 armv7 armhf aarch64"
+license="Apache-2.0"
+depends=""
+makedepends=""
+checkdepends=""
+install=""
+subpackages=""
+builddir=""
+options="net"
+
+case "$CARCH" in
+    x86)     _binarch=386; sha512sums="ef2e71ff2330fb71aeefdcb32e44a29a332b3205e65529e3d89dc6d718dccbf34e6f1803bef542dcd13aa5cb181522474f1176a77ee9e0eb8f32a64f0c064587  cloudflared-linux-386-2024.6.1" ;;
+    x86_64)  _binarch=amd64; sha512sums="7fa7703bd25179e2fd7a1f8156d851d67206887c1349e7ef4faa4fd6721e136c7f26c36b391af726778c9675e4779d6ef96d64d528756203447abb0ad80d3af6  cloudflared-linux-amd64-2024.6.1";;
+    armv7)   _binarch=arm; sha512sums="29646b9e1d22bb482f7acaf0b112fbbf7d9c6e15e51329c7843a11b41e4a0249d971444338908138367f5c373e2b609c740563050183c720d7fdfb2b326469da  cloudflared-linux-arm-2024.6.1";;
+    armhf)   _binarch=armhf; sha512sums="cb5971c146766a3691dc110a8852953c0fda31cce04c170859ca2097dd6d4dbc472d35f744de583198d8a7dcf10c133544f0fbac115592c7b1b305ee98ed6bf8  cloudflared-linux-armhf-2024.6.1";;
+    aarch64) _binarch=arm64; sha512sums="1dccd320ae508a1919166b3e9989cdd380543584b6355564e019434e1d0e8299c641bac15e76d5e492e6bc2f0be2527e28e3ca540348cd4419f1d02ee08a1297  cloudflared-linux-arm64-2024.6.1";;
+    *)       msg "Unable to determine architecture from (CARCH=$CARCH)" ; return 1 ;;
+esac
+
+source="cloudflared-linux-$_binarch-$pkgver::https://github.com/cloudflare/cloudflared/releases/download/$pkgver/cloudflared-linux-$_binarch"
+
+build() {
+        return 0
+}
+
+check() {
+        # make test
+        return 0
+}
+
+package() {
+        # Replace with proper package command(s)
+        install -Dm755 -t "$pkgdir"/usr/bin/cloudflared \
+                src/cloudflared-linux-$_binarch-$pkgver
+}
