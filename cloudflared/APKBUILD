@@ -1,7 +1,7 @@
 # Contributor: Mitsuharu Seki <mitsu1986@gmail.com>
 # Maintainer: Mitsuharu Seki <mitsu1986@gmail.com>
 pkgname=cloudflared
-# renovate: datasource=github-tags depName=dexidp/dex
+# renovate: datasource=github-tags depName=cloudflare/cloudflared
 pkgver=2024.6.1
 pkgrel=0
 pkgdesc="Cloudflare Tunnel client (formerly Argo Tunnel) "
