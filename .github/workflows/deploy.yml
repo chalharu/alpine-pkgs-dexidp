@@ -45,6 +45,9 @@ jobs:
     strategy:
       matrix:
         apkbuild-files: ${{ fromJson(needs.get-apkbuild-matrix.outputs.apkbuild-files) }}
+        apk-arch:
+          - x86_64
+          - aarch64
         include:
           - arch: amd64
             apk-arch: x86_64
