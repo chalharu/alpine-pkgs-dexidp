@@ -3,7 +3,7 @@
 pkgname=cloudflared
 # renovate: datasource=github-releases depName=cloudflare/cloudflared
 pkgver=2024.6.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Cloudflare Tunnel client (formerly Argo Tunnel) "
 url="https://github.com/cloudflare/cloudflared"
 arch="x86 x86_64 armv7 armhf aarch64"
@@ -44,7 +44,7 @@ check() {
 }
 
 package() {
-        install -Dm755 -t "$pkgdir"/usr/bin/cloudflared "$srcdir"/cloudflared-linux-$_binarch-$pkgver
+        install -D -m755 "$srcdir"/cloudflared-linux-$_binarch-$pkgver "$pkgdir"/usr/bin/cloudflared 
 
 	install -D -m755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
 	install -D -m755 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
