@@ -3,7 +3,7 @@
 pkgname=cloudflared
 # renovate: datasource=github-releases depName=cloudflare/cloudflared
 pkgver=2024.6.1
-pkgrel=0
+pkgrel=1
 pkgdesc="Cloudflare Tunnel client (formerly Argo Tunnel) "
 url="https://github.com/cloudflare/cloudflared"
 arch="x86 x86_64 armv7 armhf aarch64"
@@ -14,7 +14,11 @@ checkdepends=""
 install=""
 subpackages=""
 builddir=""
-options="net"
+options="net !check"
+subpackages="$pkgname-openrc"
+pkgusers="$pkgname"
+pkggroups="$pkgname"
+install="$pkgname.pre-install"
 
 case "$CARCH" in
     x86)     _binarch=386; sha512sums="ef2e71ff2330fb71aeefdcb32e44a29a332b3205e65529e3d89dc6d718dccbf34e6f1803bef542dcd13aa5cb181522474f1176a77ee9e0eb8f32a64f0c064587  cloudflared-linux-386-2024.6.1" ;;
@@ -25,19 +29,31 @@ case "$CARCH" in
     *)       msg "Unable to determine architecture from (CARCH=$CARCH)" ; return 1 ;;
 esac
 
-source="cloudflared-linux-$_binarch-$pkgver::https://github.com/cloudflare/cloudflared/releases/download/$pkgver/cloudflared-linux-$_binarch"
+source="cloudflared-linux-$_binarch-$pkgver::https://github.com/cloudflare/cloudflared/releases/download/$pkgver/cloudflared-linux-$_binarch
+	config.yml
+	$pkgname.initd
+	$pkgname.confd
+"
 
 build() {
         return 0
 }
 
 check() {
-        # make test
         return 0
 }
 
 package() {
-        # Replace with proper package command(s)
-        install -Dm755 -t "$pkgdir"/usr/bin/cloudflared \
-                src/cloudflared-linux-$_binarch-$pkgver
+        install -Dm755 -t "$pkgdir"/usr/bin/cloudflared "$srcdir"/cloudflared-linux-$_binarch-$pkgver
+
+	install -D -m755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -D -m755 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -D -m644 "$srcdir"/config.yml "$pkgdir"/etc/$pkgname/config.yml
+
 }
+
+sha512sums="$sha512sums
+01f43af92c2c804f6b31189b78f81a76f078179065bebf12118a8bb3ba22e1c8042ef760f24acdf1356bbe5235df7d2a00d55a158e5fec5063c5d2d6abcd7dee  config.yml
+76b684ef4d0267e8546a21cc60239ef94cbb5fd6b3c0f4fbf4e843eb6e8b56943d3200a160e1749b228306e5649e6a1fa90a58f14fb68c5794f2c760a6c14506  cloudflared.initd
+47c71a328d49f3d35dd6e0268e1d734cd21ecc84b24459f77a46df7632f9a8fdb7817cf49187f965c13c94017e4454897caa99ca12b41037dfe0455bb156ef09  cloudflared.confd
+"
