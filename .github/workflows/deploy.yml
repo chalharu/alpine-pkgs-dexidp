@@ -29,17 +29,35 @@ jobs:
     outputs:
       id: ${{ steps.build-id.outputs.id }}
       repository-name: ${{ steps.repository-name.outputs.repository-name }}
+  get-apkbuild-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+        with:
+          path: src
+      - name: APKBUILDファイルの検索
+        id: apkbuild-files
+        run: echo "apkbuild-files=$(find $PWD/src -name APKBUILD -type f | jq -R | jq -s -c)" >> $GITHUB_OUTPUT
+    outputs:
+      apkbuild-files: ${{ steps.apkbuild-files.outputs.apkbuild-files }}
   build:
     strategy:
       matrix:
+        apkbuild-files: ${{ fromJson(needs.get-apkbuild-matrix.outputs.apkbuild-files) }}
         include:
           - arch: amd64
             apk-arch: x86_64
           - arch: arm64/v8
             apk-arch: aarch64
+    concurrency:
+      group: build-${{ matrix.apk-arch }}
+      cancel-in-progress: false
     environment: Alpine packages
     runs-on: ubuntu-latest
-    needs: initialize
+    needs:
+      - initialize
+      - get-apkbuild-matrix
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.7
@@ -69,8 +87,7 @@ jobs:
           # renovate: datasource=docker depName=alpine
           DOCKER_ALPINE_VERSION: "3.20"
         run: |
-          for p in $(find $PWD/src -name APKBUILD -type f); do
-          docker run --platform linux/${{ matrix.arch }} --rm -i -v $(dirname $p):/${{ needs.initialize.outputs.repository-name }}/src -v $PWD/keys:/${{ needs.initialize.outputs.repository-name }}/keys -v $PWD/packages:/${{ needs.initialize.outputs.repository-name }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
+          docker run --platform linux/${{ matrix.arch }} --rm -i -v $(dirname ${{ matrix.apkbuild-files }}):/${{ needs.initialize.outputs.repository-name }}/src -v $PWD/keys:/${{ needs.initialize.outputs.repository-name }}/keys -v $PWD/packages:/${{ needs.initialize.outputs.repository-name }}/packages alpine:${{ env.DOCKER_ALPINE_VERSION }} sh <<'EOF'
           apk add alpine-sdk
           ABUILD_CONF="/etc/abuild.conf"
           if [ `grep -E "^PACKAGER=" $ABUILD_CONF | wc -l` == "0" ]; then echo 'PACKAGER="${{ vars.PACKAGER }}"' >> $ABUILD_CONF; fi
@@ -83,7 +100,6 @@ jobs:
           cd /${{ needs.initialize.outputs.repository-name }}/src
           abuild -r -F
           EOF
-          done
       - name: Remove other packages
         run: |
           find packages/${{ needs.initialize.outputs.repository-name }} -maxdepth 1 -mindepth 1 ! -name '${{ matrix.apk-arch }}' | xargs rm -rf
