@@ -2,7 +2,7 @@
 # Maintainer: Mitsuharu Seki <mitsu1986@gmail.com>
 pkgname=cloudflared
 # renovate: datasource=github-tags depName=cloudflare/cloudflared
-pkgver=2024.6.1
+pkgver=2024.7.1
 pkgrel=0
 pkgdesc="Cloudflare Tunnel client (formerly Argo Tunnel) "
 url="https://github.com/cloudflare/cloudflared"
